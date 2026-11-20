@@ -24,5 +24,7 @@ jobs:
       - run: pnpm test
       - run: pnpm infra:up
       - run: pnpm test:event
+      - run: pnpm test:auth
+      - run: pnpm test:catalog
       - if: always()
         run: pnpm infra:down

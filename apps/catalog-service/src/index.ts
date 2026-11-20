@@ -1,19 +1,41 @@
 import { createLogger } from "@marketplace/common";
+import { RabbitMQBroker } from "@marketplace/messaging";
 import { createApp } from "./app.js";
 import { config } from "./config/index.js";
+import { CatalogService } from "./domain/catalog-service.js";
+import { PrismaCatalogRepository } from "./infra/prisma-catalog-repository.js";
+import { createPrismaClient } from "./infra/prisma.js";
 
 const logger = createLogger({ service: "catalog-service", level: config.LOG_LEVEL });
-const server = createApp().listen(config.PORT, () => {
+const prisma = createPrismaClient();
+const broker = new RabbitMQBroker({ url: config.RABBITMQ_URL, logger });
+await Promise.all([prisma.$connect(), broker.connect()]);
+
+const catalog = new CatalogService(new PrismaCatalogRepository(prisma), broker);
+const server = createApp({
+  catalog,
+  logger,
+  isReady: async () => {
+    try {
+      await prisma.$queryRaw`SELECT 1`;
+      return true;
+    } catch {
+      return false;
+    }
+  },
+}).listen(config.PORT, () => {
   logger.info({ port: config.PORT }, "Catalog service is listening");
 });
 
 function shutdown(signal: string): void {
   logger.info({ signal }, "Shutting down");
   server.close((error) => {
-    if (error) {
-      logger.error({ err: error }, "HTTP server shutdown failed");
-      process.exitCode = 1;
-    }
+    void Promise.allSettled([prisma.$disconnect(), broker.close()]).then(() => {
+      if (error) {
+        logger.error({ err: error }, "HTTP server shutdown failed");
+        process.exitCode = 1;
+      }
+    });
   });
 }
 
