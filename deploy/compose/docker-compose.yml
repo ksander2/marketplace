@@ -108,6 +108,27 @@ services:
       start_period: 15s
     restart: unless-stopped
 
+  cart-service:
+    build:
+      context: ../..
+      dockerfile: apps/cart-service/Dockerfile
+    environment:
+      NODE_ENV: production
+      REDIS_URL: redis://redis:6379
+      RABBITMQ_URL: amqp://marketplace:marketplace@rabbitmq:5672
+    depends_on:
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://localhost:3003/health/ready').then(r => { if (!r.ok) process.exit(1) }).catch(() => process.exit(1))"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+      start_period: 15s
+    restart: unless-stopped
+
   api-gateway:
     build:
       context: ../..
@@ -117,6 +138,7 @@ services:
       REDIS_URL: redis://redis:6379
       AUTH_SERVICE_URL: http://auth-service:3001
       CATALOG_SERVICE_URL: http://catalog-service:3002
+      CART_SERVICE_URL: http://cart-service:3003
       JWT_PUBLIC_JWK: '{"crv":"Ed25519","x":"eKwg_e28alRqgirgmFNWkPFQ_etaiXKRv-G627RzK_0","kty":"OKP"}'
     ports:
       - "3000:3000"
@@ -124,6 +146,8 @@ services:
       auth-service:
         condition: service_healthy
       catalog-service:
+        condition: service_healthy
+      cart-service:
         condition: service_healthy
       redis:
         condition: service_healthy

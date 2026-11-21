@@ -6,6 +6,7 @@ import { useAuth } from "./context/AuthContext";
 import { AccountPage } from "./pages/AccountPage";
 import { AdminProductsPage } from "./pages/AdminProductsPage";
 import { CatalogPage } from "./pages/CatalogPage";
+import { CartPage } from "./pages/CartPage";
 import { LoginPage } from "./pages/LoginPage";
 import { ProductPage } from "./pages/ProductPage";
 import { RegisterPage } from "./pages/RegisterPage";
@@ -22,6 +23,7 @@ export function App() {
         <Route path="/products/:id" element={<ProductPage />} />
         <Route element={<ProtectedRoute />}>
           <Route path="/account" element={<AccountPage />} />
+          <Route path="/cart" element={<CartPage />} />
           <Route element={<SellerRoute />}>
             <Route path="/admin/products" element={<AdminProductsPage />} />
           </Route>

@@ -1,6 +1,7 @@
 import { Button, Card, CardActions, CardContent, CardMedia, Chip, Typography } from "@mui/material";
 import { Link } from "react-router-dom";
 import type { Product } from "@marketplace/contracts/catalog";
+import { AddToCartButton } from "./AddToCartButton";
 
 export function ProductCard({ product }: { product: Product }) {
   return (
@@ -25,6 +26,7 @@ export function ProductCard({ product }: { product: Product }) {
       </CardContent>
       <CardActions>
         <Button component={Link} to={`/products/${product.id}`}>Подробнее</Button>
+        <AddToCartButton product={product} />
       </CardActions>
     </Card>
   );

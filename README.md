@@ -32,6 +32,15 @@
 - публичные страницы каталога и карточки товара, CRUD-админка для seller/admin;
 - демонстрационный seller создаётся идемпотентно при запуске auth-service.
 
+### Этап 4: Cart
+
+- корзина пользователя в Redis, привязанная к `userId` и сохраняющаяся между сессиями;
+- локальная реплика товаров в Redis через durable-очередь `cart-service.catalog`;
+- обработка `catalog.product.created`, `updated` и `deleted`;
+- добавление товаров, изменение количества с проверкой остатка, удаление и очистка;
+- автоматический пересчёт позиций и общей суммы по актуальной цене из реплики;
+- защищённые маршруты `/api/cart` и React-страница корзины.
+
 ## Требования
 
 - Node.js 22.12 или новее;
@@ -65,6 +74,7 @@ Smoke-проверки:
 pnpm test:event    # RabbitMQ publish → consume
 pnpm test:auth     # без токена 401 → регистрация → вход → me → refresh → logout
 pnpm test:catalog  # buyer 403 → CRUD seller → публичный каталог → события RabbitMQ
+pnpm test:cart     # Redis → сохранение между сессиями → изменение цены через RabbitMQ
 ```
 
 Остановить контейнеры с сохранением volumes:
@@ -86,7 +96,7 @@ pnpm infra:down
 | PostgreSQL | `localhost:5432` |
 | Redis | `localhost:6379` |
 
-Auth-service и catalog-service не публикуют порты наружу в Compose: браузер и внешние клиенты обращаются только к gateway. Все ключи и учётные данные в репозитории предназначены только для локальной разработки; в другом окружении их необходимо заменить через env.
+Auth-service, catalog-service и cart-service не публикуют порты наружу в Compose: браузер и внешние клиенты обращаются только к gateway. Все ключи и учётные данные в репозитории предназначены только для локальной разработки; в другом окружении их необходимо заменить через env.
 
 SQL-скрипт `deploy/compose/postgres/init.sql` выполняется при создании нового PostgreSQL volume. После его изменения существующий volume нужно пересоздать осознанно, с потерей локальных данных.
 
@@ -100,6 +110,7 @@ pnpm exec cross-env DATABASE_URL=postgresql://auth:auth@localhost:5432/auth pnpm
 pnpm exec cross-env DATABASE_URL=postgresql://catalog:catalog@localhost:5432/catalog pnpm --filter @marketplace/catalog-service prisma:migrate
 pnpm exec cross-env SEED_SELLER_EMAIL=seller@marketplace.local SEED_SELLER_PASSWORD=seller-password-123 pnpm --filter @marketplace/auth-service dev
 pnpm --filter @marketplace/catalog-service dev
+pnpm --filter @marketplace/cart-service dev
 pnpm --filter @marketplace/api-gateway dev
 pnpm --filter @marketplace/web dev
 ```

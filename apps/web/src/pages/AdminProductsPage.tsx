@@ -55,7 +55,10 @@ export function AdminProductsPage() {
   });
 
   const refresh = async () => {
-    await queryClient.invalidateQueries({ queryKey: ["products"] });
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: ["products"] }),
+      queryClient.invalidateQueries({ queryKey: ["cart"] }),
+    ]);
   };
   const createMutation = useMutation({
     mutationFn: (input: CreateProductRequest) => createProduct(input, accessToken ?? ""),

@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Link, useParams } from "react-router-dom";
 import { getProduct } from "../api/catalog";
 import { formatPrice } from "../components/ProductCard";
+import { AddToCartButton } from "../components/AddToCartButton";
 
 export function ProductPage() {
   const { id = "" } = useParams();
@@ -26,9 +27,10 @@ export function ProductPage() {
             <Typography variant="h4" color="primary" fontWeight={700} mt={4}>
               {formatPrice(product.price)}
             </Typography>
-            <Typography color="text.secondary" mt={1}>
+            <Typography color="text.secondary" mt={1} mb={3}>
               {product.stock > 0 ? `В наличии: ${product.stock}` : "Нет в наличии"}
             </Typography>
+            <AddToCartButton product={product} />
           </div>
         </Paper>
       ) : null}

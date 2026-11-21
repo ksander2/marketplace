@@ -13,6 +13,7 @@ interface RateLimiter {
 interface AppOptions {
   authServiceUrl: string;
   catalogServiceUrl: string;
+  cartServiceUrl: string;
   corsOrigins: string[];
   publicKey: Awaited<ReturnType<typeof importJWK>>;
   rateLimiter: RateLimiter;
@@ -104,6 +105,31 @@ export function createApp(options: AppOptions): Express {
             response.end(
               JSON.stringify({
                 error: { code: "UPSTREAM_UNAVAILABLE", message: "Catalog service is unavailable" },
+              }),
+            );
+          } else {
+            response.destroy();
+          }
+        },
+      },
+    }),
+  );
+
+  app.use("/api/cart", requireAuth);
+  app.use(
+    "/api/cart",
+    createProxyMiddleware({
+      target: options.cartServiceUrl,
+      changeOrigin: true,
+      pathRewrite: (path) => `/cart${path}`,
+      on: {
+        error: (error, _request, response) => {
+          options.logger.error({ err: error }, "Cart service proxy error");
+          if ("writeHead" in response) {
+            response.writeHead(502, { "content-type": "application/json" });
+            response.end(
+              JSON.stringify({
+                error: { code: "UPSTREAM_UNAVAILABLE", message: "Cart service is unavailable" },
               }),
             );
           } else {

@@ -22,6 +22,7 @@ export function AppLayout() {
               MARKETPLACE
             </Typography>
             <nav className="main-nav" aria-label="Основная навигация">
+              {user ? <Button component={Link} to="/cart">Корзина</Button> : null}
               {canManage ? (
                 <Button component={Link} to="/admin/products">Управление товарами</Button>
               ) : null}
