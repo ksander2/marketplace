@@ -156,6 +156,27 @@ a {
   margin-top: 24px;
 }
 
+.order-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto auto;
+  align-items: center;
+  gap: 24px;
+  padding: 24px;
+}
+
+.order-details {
+  padding: 32px;
+}
+
+.order-line {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #e3e7ef;
+}
+
 @media (max-width: 700px) {
   .product-details {
     grid-template-columns: 1fr;

@@ -9,6 +9,8 @@ import { CatalogPage } from "./pages/CatalogPage";
 import { CartPage } from "./pages/CartPage";
 import { LoginPage } from "./pages/LoginPage";
 import { ProductPage } from "./pages/ProductPage";
+import { OrdersPage } from "./pages/OrdersPage";
+import { OrderPage } from "./pages/OrderPage";
 import { RegisterPage } from "./pages/RegisterPage";
 
 export function App() {
@@ -24,6 +26,8 @@ export function App() {
         <Route element={<ProtectedRoute />}>
           <Route path="/account" element={<AccountPage />} />
           <Route path="/cart" element={<CartPage />} />
+          <Route path="/orders" element={<OrdersPage />} />
+          <Route path="/orders/:id" element={<OrderPage />} />
           <Route element={<SellerRoute />}>
             <Route path="/admin/products" element={<AdminProductsPage />} />
           </Route>

@@ -27,5 +27,6 @@ jobs:
       - run: pnpm test:auth
       - run: pnpm test:catalog
       - run: pnpm test:cart
+      - run: pnpm test:order
       - if: always()
         run: pnpm infra:down

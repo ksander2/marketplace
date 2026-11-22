@@ -5,6 +5,7 @@ import { createApp } from "./app.js";
 import { config } from "./config/index.js";
 import { CartService } from "./domain/cart-service.js";
 import { CatalogEventHandler } from "./events/catalog-event-handler.js";
+import { OrderEventHandler } from "./events/order-event-handler.js";
 import { RedisCartRepository } from "./infra/redis-cart-repository.js";
 
 const logger = createLogger({ service: "cart-service", level: config.LOG_LEVEL });
@@ -13,13 +14,22 @@ redis.on("error", (error) => logger.error({ err: error }, "Redis client error"))
 const broker = new RabbitMQBroker({ url: config.RABBITMQ_URL, logger });
 const repository = new RedisCartRepository(redis);
 const events = new CatalogEventHandler(repository);
+const orderEvents = new OrderEventHandler(repository);
 
 await Promise.all([
   redis.connect(),
+  broker.connect(),
+]);
+await Promise.all([
   broker.consume({
     queue: "cart-service.catalog",
     routingKeys: ["catalog.product.*"],
     handler: (event) => events.handle(event),
+  }),
+  broker.consume({
+    queue: "cart-service.order",
+    routingKeys: ["order.order.confirmed"],
+    handler: (event) => orderEvents.handle(event),
   }),
 ]);
 

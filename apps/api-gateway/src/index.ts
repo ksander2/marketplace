@@ -22,6 +22,7 @@ const server = createApp({
   authServiceUrl: config.AUTH_SERVICE_URL,
   catalogServiceUrl: config.CATALOG_SERVICE_URL,
   cartServiceUrl: config.CART_SERVICE_URL,
+  orderServiceUrl: config.ORDER_SERVICE_URL,
   corsOrigins: config.CORS_ORIGINS,
   publicKey,
   rateLimiter,

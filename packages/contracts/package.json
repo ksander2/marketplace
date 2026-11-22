@@ -19,6 +19,10 @@
     "./cart": {
       "types": "./dist/cart.d.ts",
       "default": "./dist/cart.js"
+    },
+    "./order": {
+      "types": "./dist/order.d.ts",
+      "default": "./dist/order.js"
     }
   },
   "files": ["dist"],

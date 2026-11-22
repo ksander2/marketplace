@@ -41,6 +41,16 @@
 - автоматический пересчёт позиций и общей суммы по актуальной цене из реплики;
 - защищённые маршруты `/api/cart` и React-страница корзины.
 
+### Этап 5: Orders + saga
+
+- `POST /orders` создаёт заказ `PENDING` со снимками названий и цен и отвечает `202`;
+- локальная реплика товаров в PostgreSQL наполняется событиями `catalog.product.*`;
+- хореографическая сага через `order.order.created` и `catalog.stock.reserved` / `rejected`;
+- атомарное резервирование остатков с откатом всей транзакции при нехватке любого товара;
+- переход в `CONFIRMED` или `CANCELLED` с сохранением причины отмены;
+- очистка корзины по `order.order.confirmed`;
+- защищённые `/api/orders`, оформление из корзины, список и детали заказа в React.
+
 ## Требования
 
 - Node.js 22.12 или новее;
@@ -75,6 +85,7 @@ pnpm test:event    # RabbitMQ publish → consume
 pnpm test:auth     # без токена 401 → регистрация → вход → me → refresh → logout
 pnpm test:catalog  # buyer 403 → CRUD seller → публичный каталог → события RabbitMQ
 pnpm test:cart     # Redis → сохранение между сессиями → изменение цены через RabbitMQ
+pnpm test:order    # PENDING → CONFIRMED / CANCELLED → остатки и очистка корзины
 ```
 
 Остановить контейнеры с сохранением volumes:
@@ -96,21 +107,23 @@ pnpm infra:down
 | PostgreSQL | `localhost:5432` |
 | Redis | `localhost:6379` |
 
-Auth-service, catalog-service и cart-service не публикуют порты наружу в Compose: браузер и внешние клиенты обращаются только к gateway. Все ключи и учётные данные в репозитории предназначены только для локальной разработки; в другом окружении их необходимо заменить через env.
+Auth-service, catalog-service, cart-service и order-service не публикуют порты наружу в Compose: браузер и внешние клиенты обращаются только к gateway. Все ключи и учётные данные в репозитории предназначены только для локальной разработки; в другом окружении их необходимо заменить через env.
 
 SQL-скрипт `deploy/compose/postgres/init.sql` выполняется при создании нового PostgreSQL volume. После его изменения существующий volume нужно пересоздать осознанно, с потерей локальных данных.
 
 ## Разработка без Docker для Node.js-сервисов
 
-Запустите инфраструктуру, примените миграции Auth и Catalog, затем запустите нужные процессы:
+Запустите инфраструктуру, примените миграции Auth, Catalog и Orders, затем запустите нужные процессы:
 
 ```bash
 docker compose -f deploy/compose/docker-compose.yml up -d --wait postgres redis rabbitmq
 pnpm exec cross-env DATABASE_URL=postgresql://auth:auth@localhost:5432/auth pnpm --filter @marketplace/auth-service prisma:migrate
 pnpm exec cross-env DATABASE_URL=postgresql://catalog:catalog@localhost:5432/catalog pnpm --filter @marketplace/catalog-service prisma:migrate
+pnpm exec cross-env DATABASE_URL=postgresql://orders:orders@localhost:5432/orders pnpm --filter @marketplace/order-service prisma:migrate
 pnpm exec cross-env SEED_SELLER_EMAIL=seller@marketplace.local SEED_SELLER_PASSWORD=seller-password-123 pnpm --filter @marketplace/auth-service dev
 pnpm --filter @marketplace/catalog-service dev
 pnpm --filter @marketplace/cart-service dev
+pnpm --filter @marketplace/order-service dev
 pnpm --filter @marketplace/api-gateway dev
 pnpm --filter @marketplace/web dev
 ```

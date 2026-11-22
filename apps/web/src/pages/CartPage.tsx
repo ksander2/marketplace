@@ -12,13 +12,15 @@ import {
   Typography,
 } from "@mui/material";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { clearCart, getCart, removeCartItem, setCartItemQuantity } from "../api/cart";
+import { createOrder } from "../api/orders";
 import { formatPrice } from "../components/ProductCard";
 import { useAuth } from "../context/AuthContext";
 
 export function CartPage() {
   const { accessToken } = useAuth();
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const token = accessToken ?? "";
   const query = useQuery({
@@ -39,7 +41,16 @@ export function CartPage() {
     onSuccess: refresh,
   });
   const clearMutation = useMutation({ mutationFn: () => clearCart(token), onSuccess: refresh });
-  const error = updateMutation.error ?? removeMutation.error ?? clearMutation.error;
+  const checkoutMutation = useMutation({
+    mutationFn: () => createOrder({
+      items: cart?.items.map((item) => ({ productId: item.product.id, quantity: item.quantity })) ?? [],
+    }, token),
+    onSuccess: async (order) => {
+      await queryClient.invalidateQueries({ queryKey: ["orders"] });
+      navigate(`/orders/${order.id}`);
+    },
+  });
+  const error = updateMutation.error ?? removeMutation.error ?? clearMutation.error ?? checkoutMutation.error;
   const cart = query.data;
 
   return (
@@ -123,6 +134,14 @@ export function CartPage() {
               Очистить корзину
             </Button>
             <Typography variant="h5" fontWeight={700}>Итого: {formatPrice(cart.total)}</Typography>
+            <Button
+              variant="contained"
+              size="large"
+              disabled={checkoutMutation.isPending}
+              onClick={() => checkoutMutation.mutate()}
+            >
+              {checkoutMutation.isPending ? "Оформляем…" : "Оформить заказ"}
+            </Button>
           </div>
         </>
       ) : null}

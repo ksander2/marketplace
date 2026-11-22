@@ -23,6 +23,7 @@ export function AppLayout() {
             </Typography>
             <nav className="main-nav" aria-label="Основная навигация">
               {user ? <Button component={Link} to="/cart">Корзина</Button> : null}
+              {user ? <Button component={Link} to="/orders">Заказы</Button> : null}
               {canManage ? (
                 <Button component={Link} to="/admin/products">Управление товарами</Button>
               ) : null}

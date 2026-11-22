@@ -5,6 +5,7 @@ import type { Product } from "@marketplace/contracts/catalog";
 import type { CartRepository } from "./cart-service.js";
 import { CartService } from "./cart-service.js";
 import { CatalogEventHandler } from "../events/catalog-event-handler.js";
+import { OrderEventHandler } from "../events/order-event-handler.js";
 
 class InMemoryCartRepository implements CartRepository {
   readonly products = new Map<string, Product>();
@@ -131,5 +132,19 @@ describe("CartService", () => {
 
     await expect(service.get(userId)).resolves.toEqual({ items: [], total: 0 });
     expect(repository.carts.get(userId)?.has(product.id)).toBe(false);
+  });
+
+  it("clears the cart after order confirmation", async () => {
+    await repository.saveProduct(product);
+    await service.add(userId, { productId: product.id, quantity: 1 });
+    const orders = new OrderEventHandler(repository);
+
+    await orders.handle(createEvent({
+      type: "order.order.confirmed",
+      payload: { orderId: randomUUID(), userId },
+      correlationId,
+    }));
+
+    await expect(service.get(userId)).resolves.toEqual({ items: [], total: 0 });
   });
 });

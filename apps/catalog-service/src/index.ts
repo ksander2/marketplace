@@ -3,15 +3,27 @@ import { RabbitMQBroker } from "@marketplace/messaging";
 import { createApp } from "./app.js";
 import { config } from "./config/index.js";
 import { CatalogService } from "./domain/catalog-service.js";
+import { StockService } from "./domain/stock-service.js";
+import { OrderEventHandler } from "./events/order-event-handler.js";
 import { PrismaCatalogRepository } from "./infra/prisma-catalog-repository.js";
+import { PrismaStockRepository } from "./infra/prisma-stock-repository.js";
 import { createPrismaClient } from "./infra/prisma.js";
 
 const logger = createLogger({ service: "catalog-service", level: config.LOG_LEVEL });
 const prisma = createPrismaClient();
 const broker = new RabbitMQBroker({ url: config.RABBITMQ_URL, logger });
-await Promise.all([prisma.$connect(), broker.connect()]);
+const repository = new PrismaCatalogRepository(prisma);
+const stock = new StockService(new PrismaStockRepository(prisma), broker);
+const orderEvents = new OrderEventHandler(stock);
 
-const catalog = new CatalogService(new PrismaCatalogRepository(prisma), broker);
+await Promise.all([prisma.$connect(), broker.connect()]);
+await broker.consume({
+  queue: "catalog-service.order",
+  routingKeys: ["order.order.created"],
+  handler: (event) => orderEvents.handle(event),
+});
+
+const catalog = new CatalogService(repository, broker);
 const server = createApp({
   catalog,
   logger,

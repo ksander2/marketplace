@@ -7,6 +7,7 @@ const configSchema = baseConfigSchema.extend({
   AUTH_SERVICE_URL: z.url().default("http://localhost:3001"),
   CATALOG_SERVICE_URL: z.url().default("http://localhost:3002"),
   CART_SERVICE_URL: z.url().default("http://localhost:3003"),
+  ORDER_SERVICE_URL: z.url().default("http://localhost:3004"),
   JWT_PUBLIC_JWK: z.string().min(1).default(
     '{"crv":"Ed25519","x":"eKwg_e28alRqgirgmFNWkPFQ_etaiXKRv-G627RzK_0","kty":"OKP"}',
   ),

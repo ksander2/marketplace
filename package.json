@@ -16,6 +16,7 @@
     "test:auth": "tsx scripts/test-auth.ts",
     "test:catalog": "tsx scripts/test-catalog.ts",
     "test:cart": "tsx scripts/test-cart.ts",
+    "test:order": "tsx scripts/test-order.ts",
     "prisma:generate": "cross-env DATABASE_URL=postgresql://postgres:postgres@localhost:5432/postgres pnpm --recursive --workspace-concurrency=1 --if-present prisma:generate",
     "prisma:validate": "cross-env DATABASE_URL=postgresql://postgres:postgres@localhost:5432/postgres pnpm --recursive --workspace-concurrency=1 --if-present prisma:validate",
     "infra:up": "docker compose -f deploy/compose/docker-compose.yml up -d --build --wait",
