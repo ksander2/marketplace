@@ -96,6 +96,12 @@ pnpm infra:up
 
 Откройте http://localhost:8080. Каталог и карточки товаров доступны без входа. Для управления товарами войдите под демонстрационным продавцом `seller@marketplace.local` / `seller-password-123` и откройте «Управление товарами». Публичная регистрация по-прежнему создаёт только покупателей.
 
+## Swagger
+
+Интерактивная документация внешнего API доступна на http://localhost:3000/api/docs, OpenAPI 3.1 JSON — на http://localhost:3000/api/docs.json. Она описывает Auth, Catalog, Cart, Orders, Notifications, SSE и health-check’и API Gateway. Схемы запросов и ответов генерируются из Zod-контрактов в `packages/contracts`.
+
+Для запросов к защищённым endpoint’ам получите `accessToken` через `/api/auth/login`, нажмите **Authorize** в Swagger UI и вставьте токен без префикса `Bearer`.
+
 Smoke-проверки:
 
 ```bash
@@ -120,6 +126,7 @@ pnpm infra:down
 | --- | --- |
 | Web | http://localhost:8080 |
 | API Gateway | http://localhost:3000 |
+| Swagger UI / OpenAPI JSON | http://localhost:3000/api/docs / http://localhost:3000/api/docs.json |
 | RabbitMQ AMQP | `amqp://marketplace:marketplace@localhost:5673` |
 | RabbitMQ Management | http://localhost:15673 (`marketplace` / `marketplace`) |
 | Mailhog UI | http://localhost:8025 |

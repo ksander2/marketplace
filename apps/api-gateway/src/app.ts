@@ -4,7 +4,9 @@ import { createProxyMiddleware } from "http-proxy-middleware";
 import type { importJWK } from "jose";
 import type { Logger } from "@marketplace/common";
 import { RateLimiterRes } from "rate-limiter-flexible";
+import swaggerUi from "swagger-ui-express";
 import { authenticate } from "./api/authenticate.js";
+import { openApiDocument } from "./api/openapi.js";
 
 interface RateLimiter {
   consume(key: string): Promise<unknown>;
@@ -41,6 +43,14 @@ export function createApp(options: AppOptions): Express {
     const ready = options.isReady();
     response.status(ready ? 200 : 503).json({ status: ready ? "ok" : "unavailable" });
   });
+
+  app.get("/api/docs.json", (_request, response) => {
+    response.json(openApiDocument);
+  });
+  app.use("/api/docs", swaggerUi.serve, swaggerUi.setup(openApiDocument, {
+    customSiteTitle: "Marketplace API — Swagger UI",
+    swaggerOptions: { persistAuthorization: true },
+  }));
 
   const limitRequests: RequestHandler = async (request, response, next) => {
     try {
