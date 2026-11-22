@@ -1,11 +1,19 @@
-import { AppBar, Button, Container, Toolbar, Typography } from "@mui/material";
+import { AppBar, Badge, Button, Container, Toolbar, Typography } from "@mui/material";
+import { useQuery } from "@tanstack/react-query";
 import { Link, Outlet } from "react-router-dom";
+import { listNotifications } from "../api/notifications";
 import { useAuth } from "../context/AuthContext";
 import { useOrderEvents } from "../hooks/useOrderEvents";
 
 export function AppLayout() {
-  const { user } = useAuth();
+  const { user, accessToken } = useAuth();
   useOrderEvents();
+  const notificationsQuery = useQuery({
+    queryKey: ["notifications"],
+    queryFn: () => listNotifications(accessToken ?? ""),
+    enabled: Boolean(accessToken),
+  });
+  const unreadCount = notificationsQuery.data?.filter((notification) => !notification.readAt).length ?? 0;
   const canManage = user?.roles.some((role) => role === "seller" || role === "admin");
 
   return (
@@ -26,6 +34,11 @@ export function AppLayout() {
             <nav className="main-nav" aria-label="Основная навигация">
               {user ? <Button component={Link} to="/cart">Корзина</Button> : null}
               {user ? <Button component={Link} to="/orders">Заказы</Button> : null}
+              {user ? (
+                <Badge badgeContent={unreadCount} color="error">
+                  <Button component={Link} to="/notifications">Уведомления</Button>
+                </Badge>
+              ) : null}
               {canManage ? (
                 <Button component={Link} to="/admin/products">Управление товарами</Button>
               ) : null}

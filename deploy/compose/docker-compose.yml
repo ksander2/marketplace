@@ -73,11 +73,14 @@ services:
     environment:
       NODE_ENV: production
       DATABASE_URL: postgresql://auth:auth@postgres:5432/auth
+      RABBITMQ_URL: amqp://marketplace:marketplace@rabbitmq:5672
       JWT_PRIVATE_JWK: '{"crv":"Ed25519","d":"KIyUqF7SiH6bYStNk0vf7BgmP4tvfiefqcegjVWlZlw","x":"eKwg_e28alRqgirgmFNWkPFQ_etaiXKRv-G627RzK_0","kty":"OKP"}'
       SEED_SELLER_EMAIL: seller@marketplace.local
       SEED_SELLER_PASSWORD: seller-password-123
     depends_on:
       postgres:
+        condition: service_healthy
+      rabbitmq:
         condition: service_healthy
     healthcheck:
       test: ["CMD", "node", "-e", "fetch('http://localhost:3001/health/ready').then(r => { if (!r.ok) process.exit(1) }).catch(() => process.exit(1))"]
@@ -150,6 +153,32 @@ services:
       start_period: 15s
     restart: unless-stopped
 
+  notification-service:
+    build:
+      context: ../..
+      dockerfile: apps/notification-service/Dockerfile
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgresql://notifications:notifications@postgres:5432/notifications
+      RABBITMQ_URL: amqp://marketplace:marketplace@rabbitmq:5672
+      SMTP_HOST: mailhog
+      SMTP_PORT: 1025
+      SMTP_FROM: marketplace@marketplace.local
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      mailhog:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://localhost:3005/health/ready').then(r => { if (!r.ok) process.exit(1) }).catch(() => process.exit(1))"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+      start_period: 15s
+    restart: unless-stopped
+
   api-gateway:
     build:
       context: ../..
@@ -162,6 +191,7 @@ services:
       CATALOG_SERVICE_URL: http://catalog-service:3002
       CART_SERVICE_URL: http://cart-service:3003
       ORDER_SERVICE_URL: http://order-service:3004
+      NOTIFICATION_SERVICE_URL: http://notification-service:3005
       JWT_PUBLIC_JWK: '{"crv":"Ed25519","x":"eKwg_e28alRqgirgmFNWkPFQ_etaiXKRv-G627RzK_0","kty":"OKP"}'
     ports:
       - "3000:3000"
@@ -173,6 +203,8 @@ services:
       cart-service:
         condition: service_healthy
       order-service:
+        condition: service_healthy
+      notification-service:
         condition: service_healthy
       redis:
         condition: service_healthy

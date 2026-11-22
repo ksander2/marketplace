@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { defineEventSchema } from "./events.js";
 
 export const userRoleSchema = z.enum(["buyer", "seller", "admin"]);
 
@@ -30,11 +31,11 @@ export const authResponseSchema = z.object({
   refreshToken: z.string().min(1),
 });
 
-export const userRegisteredEventSchema = z.object({
+export const userRegisteredEventSchema = defineEventSchema("auth.user.registered", z.object({
   userId: z.uuid(),
   email: z.email(),
   name: z.string(),
-});
+}));
 
 export type UserRole = z.infer<typeof userRoleSchema>;
 export type AuthUser = z.infer<typeof authUserSchema>;

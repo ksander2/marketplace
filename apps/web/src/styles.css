@@ -168,6 +168,16 @@ a {
   padding: 32px;
 }
 
+.notification-card {
+  padding: 24px;
+  border-left: 4px solid #3157c8;
+}
+
+.notification-card.read {
+  border-left-color: transparent;
+  opacity: 0.75;
+}
+
 .order-line {
   display: flex;
   align-items: center;

@@ -60,6 +60,15 @@
 - обновление списка и деталей заказа через TanStack Query без polling и перезагрузки страницы;
 - обновление корзины и остатков каталога после подтверждения заказа.
 
+### Этап 7: Notifications
+
+- публикация `auth.user.registered` и локальная реплика email пользователей;
+- обработка регистрации, подтверждения и отмены заказа в notification-service;
+- in-app уведомления в PostgreSQL и отправка писем через SMTP в Mailhog;
+- защищённые `GET /api/notifications` и `PATCH /api/notifications/:id/read`;
+- страница уведомлений, счётчик непрочитанных, отметка прочтения и ссылки на заказы;
+- E2E «регистрация → корзина → заказ → уведомление» с проверкой писем в Mailhog.
+
 ## Требования
 
 - Node.js 22.12 или новее;
@@ -96,6 +105,7 @@ pnpm test:catalog  # buyer 403 → CRUD seller → публичный катал
 pnpm test:cart     # Redis → сохранение между сессиями → изменение цены через RabbitMQ
 pnpm test:order    # PENDING → CONFIRMED / CANCELLED → остатки и очистка корзины
 pnpm test:sse      # JWT → SSE created / confirmed / cancelled
+pnpm test:notification # регистрация → корзина → заказ → in-app и email
 ```
 
 Остановить контейнеры с сохранением volumes:
@@ -123,17 +133,19 @@ SQL-скрипт `deploy/compose/postgres/init.sql` выполняется пр�
 
 ## Разработка без Docker для Node.js-сервисов
 
-Запустите инфраструктуру, примените миграции Auth, Catalog и Orders, затем запустите нужные процессы:
+Запустите инфраструктуру, примените миграции Auth, Catalog, Orders и Notifications, затем запустите нужные процессы:
 
 ```bash
 docker compose -f deploy/compose/docker-compose.yml up -d --wait postgres redis rabbitmq
 pnpm exec cross-env DATABASE_URL=postgresql://auth:auth@localhost:5432/auth pnpm --filter @marketplace/auth-service prisma:migrate
 pnpm exec cross-env DATABASE_URL=postgresql://catalog:catalog@localhost:5432/catalog pnpm --filter @marketplace/catalog-service prisma:migrate
 pnpm exec cross-env DATABASE_URL=postgresql://orders:orders@localhost:5432/orders pnpm --filter @marketplace/order-service prisma:migrate
+pnpm exec cross-env DATABASE_URL=postgresql://notifications:notifications@localhost:5432/notifications pnpm --filter @marketplace/notification-service prisma:migrate
 pnpm exec cross-env SEED_SELLER_EMAIL=seller@marketplace.local SEED_SELLER_PASSWORD=seller-password-123 pnpm --filter @marketplace/auth-service dev
 pnpm --filter @marketplace/catalog-service dev
 pnpm --filter @marketplace/cart-service dev
 pnpm --filter @marketplace/order-service dev
+pnpm --filter @marketplace/notification-service dev
 pnpm --filter @marketplace/api-gateway dev
 pnpm --filter @marketplace/web dev
 ```

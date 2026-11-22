@@ -1,7 +1,8 @@
 import { generateKeyPairSync, randomUUID } from "node:crypto";
 import { beforeEach, describe, expect, it } from "vitest";
 import { importJWK, jwtVerify } from "jose";
-import type { RegisterRequest } from "@marketplace/contracts/auth";
+import type { EventEnvelope } from "@marketplace/contracts";
+import { userRegisteredEventSchema, type RegisterRequest } from "@marketplace/contracts/auth";
 import {
   AuthService,
   type AuthRepository,
@@ -98,9 +99,11 @@ const registration: RegisterRequest = {
 describe("AuthService", () => {
   let repository: InMemoryAuthRepository;
   let service: AuthService;
+  let publishedEvents: EventEnvelope[];
 
   beforeEach(() => {
     repository = new InMemoryAuthRepository();
+    publishedEvents = [];
     service = new AuthService(
       repository,
       new TokenService({
@@ -108,6 +111,7 @@ describe("AuthService", () => {
         accessTokenTtlSeconds: 900,
         refreshTokenTtlSeconds: 3600,
       }),
+      { publish: async (event) => { publishedEvents.push(event); } },
     );
   });
 
@@ -124,6 +128,12 @@ describe("AuthService", () => {
     expect(payload.sub).toBe(result.user.id);
     expect(payload.roles).toEqual(["buyer"]);
     expect(repository.users.get(result.user.id)?.passwordHash).not.toBe(registration.password);
+    expect(publishedEvents).toHaveLength(1);
+    expect(userRegisteredEventSchema.parse(publishedEvents[0]).payload).toEqual({
+      userId: result.user.id,
+      email: result.user.email,
+      name: result.user.name,
+    });
   });
 
   it("accepts valid credentials and rejects invalid ones", async () => {

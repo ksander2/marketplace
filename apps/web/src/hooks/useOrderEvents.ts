@@ -24,9 +24,13 @@ export function useOrderEvents(): void {
           signal: controller.signal,
           onOpen: () => {
             void refreshOrders();
+            void queryClient.invalidateQueries({ queryKey: ["notifications"] });
           },
           onEvent: (event) => {
             void refreshOrders();
+            if (event.type !== "order.order.created") {
+              void queryClient.invalidateQueries({ queryKey: ["notifications"] });
+            }
             if (event.type === "order.order.confirmed") {
               void queryClient.invalidateQueries({ queryKey: ["cart"] });
               void queryClient.invalidateQueries({ queryKey: ["products"] });

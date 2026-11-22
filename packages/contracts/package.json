@@ -23,6 +23,10 @@
     "./order": {
       "types": "./dist/order.d.ts",
       "default": "./dist/order.js"
+    },
+    "./notification": {
+      "types": "./dist/notification.d.ts",
+      "default": "./dist/notification.js"
     }
   },
   "files": ["dist"],

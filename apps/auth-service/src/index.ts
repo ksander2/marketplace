@@ -1,4 +1,5 @@
 import { createLogger } from "@marketplace/common";
+import { RabbitMQBroker } from "@marketplace/messaging";
 import { createApp } from "./app.js";
 import { config } from "./config/index.js";
 import { AuthService } from "./domain/auth-service.js";
@@ -9,7 +10,8 @@ import { seedSeller } from "./infra/seed-seller.js";
 
 const logger = createLogger({ service: "auth-service", level: config.LOG_LEVEL });
 const prisma = createPrismaClient();
-await prisma.$connect();
+const broker = new RabbitMQBroker({ url: config.RABBITMQ_URL, logger });
+await Promise.all([prisma.$connect(), broker.connect()]);
 if (config.SEED_SELLER_EMAIL && config.SEED_SELLER_PASSWORD) {
   await seedSeller(prisma, {
     email: config.SEED_SELLER_EMAIL,
@@ -22,7 +24,7 @@ const tokens = new TokenService({
   accessTokenTtlSeconds: config.ACCESS_TOKEN_TTL_SECONDS,
   refreshTokenTtlSeconds: config.REFRESH_TOKEN_TTL_SECONDS,
 });
-const authService = new AuthService(new PrismaAuthRepository(prisma), tokens);
+const authService = new AuthService(new PrismaAuthRepository(prisma), tokens, broker);
 const server = createApp({
   authService,
   logger,
@@ -41,7 +43,7 @@ const server = createApp({
 function shutdown(signal: string): void {
   logger.info({ signal }, "Shutting down");
   server.close((error) => {
-    void prisma.$disconnect().then(() => {
+    void Promise.allSettled([prisma.$disconnect(), broker.close()]).then(() => {
       if (error) {
         logger.error({ err: error }, "HTTP server shutdown failed");
         process.exitCode = 1;

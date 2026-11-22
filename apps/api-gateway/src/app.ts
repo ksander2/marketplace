@@ -15,6 +15,7 @@ interface AppOptions {
   catalogServiceUrl: string;
   cartServiceUrl: string;
   orderServiceUrl: string;
+  notificationServiceUrl: string;
   orderEventStream: RequestHandler;
   corsOrigins: string[];
   publicKey: Awaited<ReturnType<typeof importJWK>>;
@@ -158,6 +159,31 @@ export function createApp(options: AppOptions): Express {
             response.end(
               JSON.stringify({
                 error: { code: "UPSTREAM_UNAVAILABLE", message: "Order service is unavailable" },
+              }),
+            );
+          } else {
+            response.destroy();
+          }
+        },
+      },
+    }),
+  );
+
+  app.use("/api/notifications", requireAuth);
+  app.use(
+    "/api/notifications",
+    createProxyMiddleware({
+      target: options.notificationServiceUrl,
+      changeOrigin: true,
+      pathRewrite: (path) => `/notifications${path}`,
+      on: {
+        error: (error, _request, response) => {
+          options.logger.error({ err: error }, "Notification service proxy error");
+          if ("writeHead" in response) {
+            response.writeHead(502, { "content-type": "application/json" });
+            response.end(
+              JSON.stringify({
+                error: { code: "UPSTREAM_UNAVAILABLE", message: "Notification service is unavailable" },
               }),
             );
           } else {

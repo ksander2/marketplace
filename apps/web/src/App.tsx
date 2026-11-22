@@ -12,6 +12,7 @@ import { ProductPage } from "./pages/ProductPage";
 import { OrdersPage } from "./pages/OrdersPage";
 import { OrderPage } from "./pages/OrderPage";
 import { RegisterPage } from "./pages/RegisterPage";
+import { NotificationsPage } from "./pages/NotificationsPage";
 
 export function App() {
   const { user } = useAuth();
@@ -28,6 +29,7 @@ export function App() {
           <Route path="/cart" element={<CartPage />} />
           <Route path="/orders" element={<OrdersPage />} />
           <Route path="/orders/:id" element={<OrderPage />} />
+          <Route path="/notifications" element={<NotificationsPage />} />
           <Route element={<SellerRoute />}>
             <Route path="/admin/products" element={<AdminProductsPage />} />
           </Route>

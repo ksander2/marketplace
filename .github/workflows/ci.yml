@@ -29,5 +29,6 @@ jobs:
       - run: pnpm test:cart
       - run: pnpm test:order
       - run: pnpm test:sse
+      - run: pnpm test:notification
       - if: always()
         run: pnpm infra:down

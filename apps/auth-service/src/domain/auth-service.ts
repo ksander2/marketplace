@@ -1,5 +1,7 @@
+import { randomUUID } from "node:crypto";
 import bcrypt from "bcryptjs";
 import { AppError } from "@marketplace/common";
+import { createEvent, type EventEnvelope } from "@marketplace/contracts";
 import type {
   AuthResponse,
   AuthUser,
@@ -36,20 +38,31 @@ export interface AuthRepository {
   rotateRefreshToken(id: string, token: NewRefreshToken): Promise<boolean>;
 }
 
+export interface EventPublisher {
+  publish(event: EventEnvelope): Promise<void>;
+}
+
 export class AuthService {
   constructor(
     private readonly repository: AuthRepository,
     private readonly tokens: TokenService,
+    private readonly events: EventPublisher,
   ) {}
 
-  async register(input: RegisterRequest): Promise<AuthResponse> {
+  async register(input: RegisterRequest, correlationId: string = randomUUID()): Promise<AuthResponse> {
     const email = input.email.toLowerCase();
     const existing = await this.repository.findUserByEmail(email);
     if (existing) throw new AppError("Email is already registered", "EMAIL_ALREADY_EXISTS", 409);
 
     const passwordHash = await bcrypt.hash(input.password, 12);
     const user = await this.repository.createUser({ ...input, email, passwordHash });
-    return this.createAuthResponse(user);
+    const response = await this.createAuthResponse(user);
+    await this.events.publish(createEvent({
+      type: "auth.user.registered",
+      correlationId,
+      payload: { userId: user.id, email: user.email, name: user.name },
+    }));
+    return response;
   }
 
   async login(input: LoginRequest): Promise<AuthResponse> {

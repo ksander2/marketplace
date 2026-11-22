@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import { Router } from "express";
 import {
   loginRequestSchema,
@@ -5,6 +6,7 @@ import {
   registerRequestSchema,
 } from "@marketplace/contracts/auth";
 import { AppError } from "@marketplace/common";
+import { z } from "zod";
 import type { AuthService } from "../domain/auth-service.js";
 
 export function createAuthRoutes(authService: AuthService): Router {
@@ -12,7 +14,7 @@ export function createAuthRoutes(authService: AuthService): Router {
 
   router.post("/register", async (request, response) => {
     const input = registerRequestSchema.parse(request.body);
-    response.status(201).json(await authService.register(input));
+    response.status(201).json(await authService.register(input, correlationId(request.header("x-correlation-id"))));
   });
 
   router.post("/login", async (request, response) => {
@@ -38,4 +40,8 @@ export function createAuthRoutes(authService: AuthService): Router {
   });
 
   return router;
+}
+
+function correlationId(value: string | undefined): string {
+  return value ? z.uuid().parse(value) : randomUUID();
 }
