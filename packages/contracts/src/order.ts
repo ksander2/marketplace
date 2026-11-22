@@ -61,7 +61,14 @@ export const orderCancelledEventSchema = defineEventSchema("order.order.cancelle
   reason: z.string().min(1),
 }));
 
+export const orderEventSchema = z.union([
+  orderCreatedEventSchema,
+  orderConfirmedEventSchema,
+  orderCancelledEventSchema,
+]);
+
 export type OrderStatus = z.infer<typeof orderStatusSchema>;
 export type Order = z.infer<typeof orderSchema>;
 export type CreateOrderRequest = z.infer<typeof createOrderRequestSchema>;
 export type StockReservationItem = z.infer<typeof stockReservationItemSchema>;
+export type OrderEvent = z.infer<typeof orderEventSchema>;

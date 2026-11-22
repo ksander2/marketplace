@@ -4,6 +4,7 @@ import { z } from "zod";
 const configSchema = baseConfigSchema.extend({
   PORT: z.coerce.number().int().min(1).max(65535).default(3000),
   REDIS_URL: z.url().default("redis://localhost:6379"),
+  RABBITMQ_URL: z.url().default("amqp://localhost:5672"),
   AUTH_SERVICE_URL: z.url().default("http://localhost:3001"),
   CATALOG_SERVICE_URL: z.url().default("http://localhost:3002"),
   CART_SERVICE_URL: z.url().default("http://localhost:3003"),

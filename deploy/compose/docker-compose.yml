@@ -157,6 +157,7 @@ services:
     environment:
       NODE_ENV: production
       REDIS_URL: redis://redis:6379
+      RABBITMQ_URL: amqp://marketplace:marketplace@rabbitmq:5672
       AUTH_SERVICE_URL: http://auth-service:3001
       CATALOG_SERVICE_URL: http://catalog-service:3002
       CART_SERVICE_URL: http://cart-service:3003
@@ -174,6 +175,8 @@ services:
       order-service:
         condition: service_healthy
       redis:
+        condition: service_healthy
+      rabbitmq:
         condition: service_healthy
     healthcheck:
       test: ["CMD", "node", "-e", "fetch('http://localhost:3000/health/ready').then(r => { if (!r.ok) process.exit(1) }).catch(() => process.exit(1))"]

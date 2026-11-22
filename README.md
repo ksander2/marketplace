@@ -51,6 +51,15 @@
 - очистка корзины по `order.order.confirmed`;
 - защищённые `/api/orders`, оформление из корзины, список и детали заказа в React.
 
+### Этап 6: SSE и статусы в UI
+
+- durable-очередь `api-gateway.order` для событий `order.order.*`;
+- авторизованный JWT поток `GET /api/events/orders` с heartbeat и отключением буферизации в Nginx;
+- доставка событий заказа только его владельцу;
+- fetch-стрим в React с автоматическим переподключением и повторной загрузкой заказов;
+- обновление списка и деталей заказа через TanStack Query без polling и перезагрузки страницы;
+- обновление корзины и остатков каталога после подтверждения заказа.
+
 ## Требования
 
 - Node.js 22.12 или новее;
@@ -86,6 +95,7 @@ pnpm test:auth     # без токена 401 → регистрация → вх
 pnpm test:catalog  # buyer 403 → CRUD seller → публичный каталог → события RabbitMQ
 pnpm test:cart     # Redis → сохранение между сессиями → изменение цены через RabbitMQ
 pnpm test:order    # PENDING → CONFIRMED / CANCELLED → остатки и очистка корзины
+pnpm test:sse      # JWT → SSE created / confirmed / cancelled
 ```
 
 Остановить контейнеры с сохранением volumes:

@@ -13,7 +13,6 @@ export function OrderPage() {
     queryKey: ["orders", id],
     queryFn: () => getOrder(id, accessToken ?? ""),
     enabled: Boolean(accessToken && id),
-    refetchInterval: (query) => query.state.data?.status === "PENDING" ? 1000 : false,
   });
   const order = query.data;
 

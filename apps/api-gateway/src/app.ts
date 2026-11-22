@@ -15,6 +15,7 @@ interface AppOptions {
   catalogServiceUrl: string;
   cartServiceUrl: string;
   orderServiceUrl: string;
+  orderEventStream: RequestHandler;
   corsOrigins: string[];
   publicKey: Awaited<ReturnType<typeof importJWK>>;
   rateLimiter: RateLimiter;
@@ -85,6 +86,7 @@ export function createApp(options: AppOptions): Express {
   );
 
   const requireAuth = authenticate(options.publicKey);
+  app.get("/api/events/orders", requireAuth, options.orderEventStream);
   app.use("/api/products", (request, response, next) => {
     if (request.method === "GET") {
       next();

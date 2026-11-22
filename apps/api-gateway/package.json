@@ -12,6 +12,7 @@
   "dependencies": {
     "@marketplace/common": "workspace:*",
     "@marketplace/contracts": "workspace:*",
+    "@marketplace/messaging": "workspace:*",
     "cors": "^2.8.6",
     "express": "^5.3.0",
     "http-proxy-middleware": "^4.2.2",

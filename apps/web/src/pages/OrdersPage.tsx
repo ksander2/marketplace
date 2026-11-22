@@ -12,7 +12,6 @@ export function OrdersPage() {
     queryKey: ["orders"],
     queryFn: () => listOrders(accessToken ?? ""),
     enabled: Boolean(accessToken),
-    refetchInterval: (query) => query.state.data?.some((order) => order.status === "PENDING") ? 1500 : false,
   });
 
   return (

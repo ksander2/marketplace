@@ -2,13 +2,22 @@ import { createLogger } from "@marketplace/common";
 import { importJWK } from "jose";
 import { RateLimiterRedis } from "rate-limiter-flexible";
 import { createClient } from "redis";
+import { RabbitMQBroker } from "@marketplace/messaging";
 import { createApp } from "./app.js";
 import { config } from "./config/index.js";
+import { OrderEventStream } from "./events/order-event-stream.js";
 
 const logger = createLogger({ service: "api-gateway", level: config.LOG_LEVEL });
 const redis = createClient({ url: config.REDIS_URL });
 redis.on("error", (error) => logger.error({ err: error }, "Redis client error"));
-await redis.connect();
+const broker = new RabbitMQBroker({ url: config.RABBITMQ_URL, logger });
+const orderEventStream = new OrderEventStream();
+await Promise.all([redis.connect(), broker.connect()]);
+await broker.consume({
+  queue: "api-gateway.order",
+  routingKeys: ["order.order.*"],
+  handler: async (event) => orderEventStream.handle(event),
+});
 
 const publicKey = await importJWK(JSON.parse(config.JWT_PUBLIC_JWK), "EdDSA");
 const rateLimiter = new RateLimiterRedis({
@@ -23,6 +32,7 @@ const server = createApp({
   catalogServiceUrl: config.CATALOG_SERVICE_URL,
   cartServiceUrl: config.CART_SERVICE_URL,
   orderServiceUrl: config.ORDER_SERVICE_URL,
+  orderEventStream: orderEventStream.handleRequest,
   corsOrigins: config.CORS_ORIGINS,
   publicKey,
   rateLimiter,
@@ -34,8 +44,9 @@ const server = createApp({
 
 function shutdown(signal: string): void {
   logger.info({ signal }, "Shutting down");
+  orderEventStream.close();
   server.close((error) => {
-    void redis.quit().then(() => {
+    void Promise.allSettled([redis.quit(), broker.close()]).then(() => {
       if (error) {
         logger.error({ err: error }, "HTTP server shutdown failed");
         process.exitCode = 1;

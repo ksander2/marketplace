@@ -1,9 +1,11 @@
 import { AppBar, Button, Container, Toolbar, Typography } from "@mui/material";
 import { Link, Outlet } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import { useOrderEvents } from "../hooks/useOrderEvents";
 
 export function AppLayout() {
   const { user } = useAuth();
+  useOrderEvents();
   const canManage = user?.roles.some((role) => role === "seller" || role === "admin");
 
   return (
